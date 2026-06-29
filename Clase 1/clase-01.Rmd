@@ -1,6 +1,5 @@
 ---
-title: "Clase 1: Introducción a R"
-subtitle: "Instalación, objetos, tipos de datos, estructuras y matrices"
+title: 'Clase 1: Introducción a R'
 author: "Introducción a la Programación para Economistas"
 date: "`r Sys.Date()`"
 output:
@@ -9,6 +8,9 @@ output:
     toc_float: true
     theme: flatly
     highlight: tango
+  pdf_document:
+    toc: true
+subtitle: Instalación, objetos, tipos de datos, estructuras y matrices
 ---
 
 ```{r setup, include=FALSE}
