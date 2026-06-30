@@ -1,0 +1,171 @@
+---
+title: "Clase 2: Manipulación de datos con tidyverse"
+author: "Introducción a la Programación para Economistas"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = "##")
+```
+
+---
+
+# Tidyverse
+
+`tidyverse` es un conjunto de paquetes de R para trabajar con datos de forma consistente y legible. Hoy nos enfocamos en `dplyr`, el paquete con las funciones que más vas a usar para manipular data frames.
+
+```{r}
+# install.packages("tidyverse")  # solo la primera vez
+library(tidyverse)
+```
+
+---
+
+# Datos de ejemplo: una cafetería
+
+```{r}
+set.seed(11)
+
+n <- 40
+
+ventas <- data.frame(
+  sucursal = sample(c("Centro", "Roma", "Condesa"), n, replace = TRUE),
+  producto = sample(c("Café", "Té", "Pan dulce", "Sandwich"), n, replace = TRUE),
+  dia      = sample(c("Lunes", "Martes", "Miércoles", "Jueves", "Viernes"), n, replace = TRUE),
+  precio   = round(runif(n, min = 25, max = 95), 0),
+  cantidad = sample(1:5, n, replace = TRUE)
+)
+
+head(ventas, 10)
+```
+
+Cada fila es una venta individual. Vamos a aprender a hacerle preguntas a esta tabla.
+
+---
+
+# El pipe `%>%`
+
+El pipe toma lo que está a su izquierda y lo pasa como primer argumento a la función de la derecha. Se lee de arriba hacia abajo, en el orden en que pasan las cosas.
+
+```{r}
+# Sin pipe
+round(mean(ventas$precio), 1)
+
+# Con pipe — mismo resultado
+ventas$precio %>% mean() %>% round(1)
+```
+
+A partir de aquí vamos a encadenar funciones de `dplyr` sobre `ventas` constantemente.
+
+---
+
+# `filter()` — elegir filas
+
+```{r}
+ventas %>% filter(sucursal == "Roma")
+```
+
+```{r}
+ventas %>% filter(producto %in% c("Café", "Té"))
+```
+
+```{r}
+ventas %>% filter(precio > 70 & cantidad >= 3)
+```
+
+---
+
+# `select()` — elegir columnas
+
+```{r}
+ventas %>% select(sucursal, producto, precio)
+```
+
+```{r}
+ventas %>% select(-dia)
+```
+
+Encadenar `filter` y `select` es muy común: ¿cuál fue la venta más cara del viernes?
+
+```{r}
+ventas %>%
+  filter(dia == "Viernes") %>%
+  filter(precio == max(precio)) %>%
+  select(sucursal, producto, precio)
+```
+
+---
+
+# `mutate()` — crear columnas nuevas
+
+```{r}
+ventas <- ventas %>%
+  mutate(ingreso = precio * cantidad)
+
+head(ventas, 6)
+```
+
+---
+
+# `group_by()` + `summarise()` — resumir por grupo
+
+Esto es lo más poderoso de `dplyr`: aplicar una operación a cada grupo por separado, en una sola línea.
+
+```{r}
+ventas %>%
+  group_by(sucursal) %>%
+  summarise(
+    ingreso_total   = sum(ingreso),
+    ticket_promedio = mean(ingreso),
+    n_ventas        = n()
+  )
+```
+
+Sin `group_by` tendrías que filtrar tres veces (una por sucursal) y juntar los resultados a mano.
+
+---
+
+# Pivotar: de largo a ancho
+
+Nuestros datos están en formato **largo** (una fila por venta). A veces necesitas una tabla resumen en formato **ancho** — por ejemplo, sucursales en filas y productos en columnas:
+
+```{r}
+resumen_ingresos <- ventas %>%
+  group_by(sucursal, producto) %>%
+  summarise(ingreso = sum(ingreso), .groups = "drop")
+
+resumen_ingresos
+```
+
+```{r}
+resumen_ingresos %>%
+  pivot_wider(
+    names_from = producto,
+    values_from = ingreso,
+    values_fill = 0
+  )
+```
+
+`names_from` indica de dónde salen los nombres de columnas nuevas, `values_from` de dónde salen los valores, y `values_fill = 0` rellena con cero las combinaciones sin ventas en vez de dejar `NA`.
+
+---
+
+# Todo junto
+
+```{r}
+ventas %>%
+  group_by(sucursal, producto) %>%
+  summarise(ingreso = sum(ingreso), .groups = "drop") %>%
+  group_by(sucursal) %>%
+  filter(ingreso == max(ingreso)) %>%
+  select(sucursal, producto, ingreso)
+```
+
+Esta cadena responde: ¿cuál es el producto más vendido (por ingreso) en cada sucursal? Resume, agrupa de nuevo, filtra el máximo de cada grupo, y selecciona. 
+

@@ -1,0 +1,262 @@
+---
+title: "GitHub: cómo entregar tus ejercicios"
+author: "Introducción a la Programación para Economistas"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE, comment = "##")
+```
+
+Esta guía explica, de cero y paso a paso, cómo vas a entregar tus ejercicios resueltos durante el curso. No necesitas saber nada de Git o GitHub antes de empezar — eso es justo lo que vamos a aprender aquí.
+
+---
+
+# ¿Qué es Git y qué es GitHub?
+
+Son dos cosas distintas que se usan juntas, y vale la pena no confundirlas:
+
+**Git** es un programa instalado en tu computadora que lleva un historial de los cambios que haces a tus archivos. Cada vez que guardas un avance, Git toma una "foto" de cómo quedó todo en ese momento. Si algo se rompe después, siempre puedes volver a una foto anterior.
+
+**GitHub** es una página web donde se guardan copias de esos historiales, para que puedas verlos desde cualquier lado y compartirlos con otras personas — en este caso, conmigo.
+
+La analogía más simple: Git es como el "guardar" de un videojuego (guarda tu progreso localmente), y GitHub es como la nube donde subes esa partida guardada para que otra persona la pueda ver.
+
+---
+
+# El plan completo, en una imagen mental
+
+1. Yo tengo un repositorio (una carpeta con historial de Git) con todo el material del curso: **https://github.com/aabermejoq/ProgramacionParaEconomistas**
+2. Tú haces una copia de ese repositorio en tu propia cuenta de GitHub. Esto se llama **fork**.
+3. Bajas esa copia (tu fork) a tu computadora. Esto se llama **clonar**.
+4. Resuelves los ejercicios en tu computadora, normal, como cualquier archivo.
+5. Subes tus avances de vuelta a tu copia en GitHub.
+6. Me compartes el link de tu copia, y ahí es donde yo reviso tu trabajo.
+
+> **La idea clave:** tú nunca tocas mi repositorio directamente. Trabajas siempre sobre **tu propia copia**. Por eso necesitas hacer un fork antes que nada — sin eso, no tienes dónde guardar tus cambios.
+
+---
+
+# Paso 1 — Crear tu cuenta de GitHub
+
+Si no tienes una, créala en [https://github.com](https://github.com). Recomendaciones:
+
+- Usa un correo que revises seguido
+- Elige un nombre de usuario que se vea profesional — vas a usar esta cuenta más allá del curso, y es lo primero que yo voy a ver cuando revise tu trabajo
+
+---
+
+# Paso 2 — Hacer fork de mi repositorio
+
+1. Entra a **https://github.com/aabermejoq/ProgramacionParaEconomistas**
+2. Arriba a la derecha de la página vas a ver un botón que dice **Fork**. Haz clic ahí.
+3. GitHub te va a preguntar en qué cuenta crear la copia — elige la tuya.
+4. Haz clic en **Create fork**.
+
+Cuando termine, vas a estar parado en una página que se ve casi idéntica a la mía, pero la URL ahora dice tu usuario en vez del mío:
+
+```
+https://github.com/TU_USUARIO/ProgramacionParaEconomistas
+```
+
+Esa es **tu** copia. Existe de forma independiente a la mía: puedes hacerle lo que quieras sin que yo me entere, hasta que tú decidas compartirme el link.
+
+---
+
+# Paso 3 — Conectar tu computadora con GitHub (solo la primera vez)
+
+Antes de poder subir cambios desde tu computadora, GitHub necesita confirmar que de verdad eres tú. Hay dos formas de hacer esto — elige una.
+
+## Opción A: Token de acceso personal (más simple de configurar)
+
+Es como una contraseña especial, generada por GitHub, que usas solo para estas operaciones.
+
+1. Ve a [github.com/settings/tokens](https://github.com/settings/tokens)
+2. Haz clic en **Generate new token** → **Generate new token (classic)**
+3. Ponle un nombre que reconozcas, por ejemplo "mi laptop"
+4. En la lista de permisos, marca la casilla **repo**
+5. Baja hasta el final y haz clic en **Generate token**
+6. Copia el token que aparece — **solo lo vas a ver esta vez**, guárdalo en un lugar seguro (un gestor de contraseñas, una nota privada)
+
+Cuando más adelante la terminal te pida tu "Password", vas a pegar este token ahí, no tu contraseña normal de GitHub. Desde 2021, GitHub ya no acepta la contraseña normal para esto — solo el token sirve.
+
+## Opción B: Llave SSH (se configura una vez, nunca más te pide nada)
+
+Es un par de archivos —uno público, uno privado— que identifican a tu computadora ante GitHub, sin necesidad de escribir nada cada vez que subes cambios.
+
+Desde la terminal:
+
+```bash
+ssh-keygen -t ed25519 -C "tu_correo@ejemplo.com"
+```
+
+Presiona Enter en todas las preguntas que aparezcan (rutas y contraseña por defecto están bien). Luego copia tu llave pública:
+
+```bash
+cat ~/.ssh/id_ed25519.pub
+```
+
+Copia todo el texto que aparece. Ve a GitHub → tu foto de perfil → **Settings** → **SSH and GPG keys** → **New SSH key**, pégalo ahí y guarda.
+
+> **¿Cuál elegir?** Si esta es la primera vez que tocas la terminal en tu vida, usa el **Token** — son menos pasos y menos cosas nuevas a la vez. Si ya te sientes cómodo, usa **SSH**: lo configuras una sola vez y nunca más vuelves a lidiar con contraseñas.
+
+---
+
+# Paso 4 — Clonar tu fork a tu computadora
+
+"Clonar" significa descargar tu copia de GitHub a tu computadora, para poder trabajar en los archivos localmente.
+
+Abre la terminal y muévete a la carpeta donde quieras guardar el curso, por ejemplo el Desktop:
+
+```bash
+cd ~/Desktop
+```
+
+Ahora ve a la página de **tu fork** en GitHub (no la mía — la que tiene tu usuario en la URL), haz clic en el botón verde que dice **Code**, y copia el link.
+
+**Si elegiste Token (Opción A):** copia el link que empieza con `https://`
+
+```bash
+git clone https://github.com/TU_USUARIO/ProgramacionParaEconomistas.git
+```
+
+**Si elegiste SSH (Opción B):** cambia a la pestaña SSH antes de copiar, el link empieza con `git@`
+
+```bash
+git clone git@github.com:TU_USUARIO/ProgramacionParaEconomistas.git
+```
+
+Esto crea una carpeta `ProgramacionParaEconomistas` en tu Desktop con todo el contenido del curso adentro. Entra a esa carpeta:
+
+```bash
+cd ProgramacionParaEconomistas
+```
+
+De aquí en adelante, todo lo que hagas con Git en esta carpeta afecta **tu copia**, nunca la mía.
+
+---
+
+# Paso 5 — Verificar que quedó bien conectado
+
+Este paso es opcional pero te ahorra dolores de cabeza después. Corre:
+
+```bash
+git remote -v
+```
+
+Deberías ver tu propio usuario en la URL, algo así:
+
+```
+origin  https://github.com/TU_USUARIO/ProgramacionParaEconomistas.git (fetch)
+origin  https://github.com/TU_USUARIO/ProgramacionParaEconomistas.git (push)
+```
+
+Si en vez de tu usuario aparece `aabermejoq`, algo salió mal: probablemente clonaste mi repositorio directamente en lugar de tu fork. Regresa al Paso 4 y revisa que copiaste la URL de **tu** página, no la mía.
+
+---
+
+# El flujo que vas a repetir cada clase
+
+Una vez hecho el setup de arriba, esto es lo único que necesitas recordar de aquí al final del curso. Tres comandos, siempre en el mismo orden.
+
+## 1. Trabaja en tus archivos
+
+Abre el `.Rmd` correspondiente en RStudio, resuelve los ejercicios, guarda el archivo normal (`Cmd+S` o `Ctrl+S`).
+
+## 2. Sube tus cambios a GitHub
+
+Desde la terminal, parado dentro de la carpeta del repositorio:
+
+```bash
+git add .
+git commit -m "resuelvo ejercicios clase 2"
+git push
+```
+
+Qué hace cada línea:
+
+- `git add .` — le dice a Git "toma en cuenta todos los archivos que cambié"
+- `git commit -m "..."` — guarda esa "foto" del estado actual, con un mensaje describiendo qué hiciste
+- `git push` — sube esa foto a tu copia en GitHub, para que quede visible en la web
+
+> Escribe un mensaje distinto cada vez, que diga qué hiciste de verdad. "cambios" o "avance" no le sirven a nadie — ni siquiera a ti mismo dentro de un mes, cuando quieras recordar qué pasó en cada entrega.
+
+## 3. Verifica que se subió bien
+
+Entra a `https://github.com/TU_USUARIO/ProgramacionParaEconomistas` en el navegador. Deberías ver tus archivos actualizados y tu mensaje de commit más reciente arriba de todo.
+
+## 4. Comparte el link conmigo
+
+El link es siempre el mismo durante todo el curso: la URL de tu fork. No necesitas volver a mandármelo cada clase — solo asegúrate de que tus cambios estén subidos (paso 2) antes de cada fecha de entrega.
+
+---
+
+# Si subo material nuevo al curso
+
+Cuando yo agregue clases nuevas a mi repositorio original, esos archivos no van a aparecer automáticamente en tu copia — tu fork quedó "congelado" en el momento en que lo creaste. Para traer lo nuevo:
+
+## Conectar mi repositorio como referencia (solo una vez)
+
+```bash
+git remote add upstream https://github.com/aabermejoq/ProgramacionParaEconomistas.git
+```
+
+Esto le dice a tu copia local "además de tu fork (origin), también conoces el repositorio original (upstream)". Verifica que quedó bien:
+
+```bash
+git remote -v
+```
+
+Ahora deberías ver dos repositorios listados: `origin` (tu fork) y `upstream` (el mío).
+
+## Traer el material nuevo (cada vez que yo avise)
+
+```bash
+git fetch upstream
+git merge upstream/main
+```
+
+Esto trae las clases nuevas a tu copia local, sin tocar los ejercicios que ya resolviste. Si algo genera conflicto (poco común si solo agrego archivos), Git te va a avisar y lo resolvemos juntos en clase.
+
+---
+
+# Resumen de todos los comandos
+
+```{bash}
+# Una sola vez, al inicio del curso (después de hacer fork en la web)
+git clone https://github.com/TU_USUARIO/ProgramacionParaEconomistas.git
+cd ProgramacionParaEconomistas
+git remote add upstream https://github.com/aabermejoq/ProgramacionParaEconomistas.git
+
+# Cada clase, para entregar tu trabajo
+git add .
+git commit -m "mensaje describiendo qué hiciste"
+git push
+
+# Cuando yo avise que subí material nuevo
+git fetch upstream
+git merge upstream/main
+```
+
+---
+
+# Errores comunes (y qué significan)
+
+**`fatal: not a git repository`**
+No estás parado dentro de la carpeta correcta. Corre `cd ProgramacionParaEconomistas` primero y vuelve a intentar.
+
+**`Authentication failed` al hacer push**
+Esto es justo lo que resuelve el Paso 3. GitHub ya no acepta tu contraseña normal — necesitas el token (Opción A) o tener configurado SSH (Opción B). Si ya hiciste alguno de los dos y sigue fallando, revisa que copiaste el token completo sin espacios extra, o que tu llave SSH está correctamente pegada en GitHub.
+
+**Hice push pero no veo mis cambios reflejados cuando lo reviso**
+Verifica con `git remote -v` que estás conectado a tu fork y no al mío. Después confirma directamente en el navegador, en tu página de GitHub, que el commit aparece ahí arriba.
+
+**`Updates were rejected because the remote contains work that you do not have locally`**
+Pasa cuando hiciste algún cambio desde otro lugar (otra computadora, o editando directo en la web de GitHub) sin haberlo bajado primero. Corre `git pull` antes de tu `git push` para sincronizar.
+

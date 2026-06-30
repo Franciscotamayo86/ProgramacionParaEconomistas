@@ -1,0 +1,156 @@
+---
+title: "Clase 2: Ejercicios"
+author: "Tu nombre aquí"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = "##")
+```
+
+```{r}
+library(tidyverse)
+```
+
+Completa los chunks de código. Cuando termines, haz **Knit** y verifica que todo corra sin errores antes de entregar.
+
+---
+
+# Datos: una tienda de ropa en línea
+
+Trabajamos con pedidos de una tienda de ropa con envíos a tres ciudades. Cada fila es un pedido.
+
+```{r}
+set.seed(55)
+
+n <- 50
+
+pedidos <- data.frame(
+  ciudad    = sample(c("CDMX", "Guadalajara", "Monterrey"), n, replace = TRUE),
+  categoria = sample(c("Playeras", "Pantalones", "Zapatos", "Accesorios"), n, replace = TRUE),
+  metodo_pago = sample(c("Tarjeta", "Transferencia", "Efectivo"), n, replace = TRUE),
+  precio    = round(runif(n, min = 150, max = 1800), 0),
+  unidades  = sample(1:4, n, replace = TRUE)
+)
+
+head(pedidos, 10)
+```
+
+---
+
+# Parte 1 — `filter()`
+
+**Ejercicio 1.** Filtra solo los pedidos hechos en Guadalajara.
+
+```{r}
+
+```
+
+**Ejercicio 2.** Filtra los pedidos pagados con Tarjeta o Transferencia (usa `%in%`).
+
+```{r}
+
+```
+
+**Ejercicio 3.** Filtra los pedidos con precio mayor a 1000 **y** más de 2 unidades.
+
+```{r}
+
+```
+
+---
+
+# Parte 2 — `select()`
+
+**Ejercicio 4.** Selecciona solo las columnas `ciudad`, `categoria` y `precio`.
+
+```{r}
+
+```
+
+**Ejercicio 5.** Selecciona todas las columnas excepto `metodo_pago`.
+
+```{r}
+
+```
+
+---
+
+# Parte 3 — Encadenar `filter` y `select`
+
+**Ejercicio 6.** ¿Cuál fue el pedido más caro hecho en Monterrey? Muestra solo `categoria` y `precio`.
+
+```{r}
+
+```
+
+**Ejercicio 7.** ¿Cuál fue el pedido más barato pagado en Efectivo? Muestra `ciudad`, `categoria` y `precio`.
+
+```{r}
+
+```
+
+---
+
+# Parte 4 — `mutate()`
+
+**Ejercicio 8.** Crea una columna `ingreso` que sea `precio * unidades`. Guarda el resultado de vuelta en `pedidos`.
+
+```{r}
+
+```
+
+**Ejercicio 9.** Crea una columna `pedido_grande` que sea `TRUE` si `ingreso` es mayor a 2000.
+
+```{r}
+
+```
+
+---
+
+# Parte 5 — `group_by()` + `summarise()`
+
+**Ejercicio 10.** Para cada ciudad, calcula el ingreso total, el ingreso promedio por pedido, y el número de pedidos.
+
+```{r}
+
+```
+
+**Ejercicio 11.** Para cada categoría, calcula cuántas unidades se vendieron en total (suma de `unidades`).
+
+```{r}
+
+```
+
+**Ejercicio 12.** Agrupa por `ciudad` y `metodo_pago` al mismo tiempo, y calcula el ingreso total de cada combinación.
+
+```{r}
+
+```
+
+---
+
+# Parte 6 — Pivotar
+
+**Ejercicio 13.** Usando el resultado del Ejercicio 12, pivotea la tabla a formato ancho: una fila por ciudad, una columna por método de pago, con el ingreso total como valor. Rellena los huecos con 0.
+
+```{r}
+
+```
+
+---
+
+# Parte 7 — Todo junto
+
+**Ejercicio 14.** ¿Cuál es la categoría más vendida (por ingreso) en cada ciudad? Construye la cadena completa: agrupa por ciudad y categoría, suma el ingreso, vuelve a agrupar por ciudad, filtra el máximo de cada grupo, y muestra solo `ciudad`, `categoria` e `ingreso`.
+
+```{r}
+
+```
+
