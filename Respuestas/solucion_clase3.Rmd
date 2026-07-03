@@ -1,0 +1,200 @@
+---
+title: "Clase 3: Ejercicios — Solución"
+author: "Francisco Tamayo"
+date: "1ro de julio de 2026"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = "##")
+```
+
+```{r}
+library(tidyverse)
+library(broom)
+```
+
+```{r}
+macro <- read_csv("/Users/franciscotamayo/Desktop/R/fred_macro.csv") %>%
+  mutate(fecha = as.Date(fecha))
+```
+
+---
+
+# Parte 1 — Limpieza y preparación
+
+**Ejercicio 1.** Conteo de `NA` por columna.
+
+```{r}
+macro %>%
+  summarise(across(everything(), ~ sum(is.na(.))))
+```
+
+**Ejercicio 2.** Rezagos y dummy de crisis.
+
+```{r}
+macro <- macro %>%
+  mutate(
+    tasa_lag1     = lag(tasa_interes, 1),
+    desempleo_lag1 = lag(desempleo, 1),
+    crisis        = desempleo > 7.5
+  )
+```
+
+**Ejercicio 3.** Subset 2008–2012.
+
+```{r}
+crisis_financiera <- macro %>%
+  filter(year(fecha) >= 2008, year(fecha) <= 2012)
+
+nrow(crisis_financiera)
+```
+
+---
+
+# Parte 2 — Exploración visual
+
+**Ejercicio 4.** Tres series en paneles separados.
+
+```{r}
+macro %>%
+  select(fecha, desempleo, inflacion, tasa_interes) %>%
+  pivot_longer(-fecha, names_to = "serie", values_to = "valor") %>%
+  ggplot(aes(x = fecha, y = valor, color = serie)) +
+  geom_line(linewidth = 0.8) +
+  facet_wrap(~ serie, scales = "free_y", ncol = 1) +
+  labs(title = "Indicadores macro de EEUU (2000–2024)",
+       x = NULL, y = NULL) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+**Ejercicio 5.** Dispersión desempleo vs tasa de interés, por crisis.
+
+```{r}
+macro %>%
+  ggplot(aes(x = desempleo, y = tasa_interes, color = crisis)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = TRUE, color = "firebrick") +
+  scale_color_manual(values = c("FALSE" = "steelblue", "TRUE" = "orange"),
+                     labels = c("Normal", "Crisis")) +
+  labs(title = "Desempleo vs tasa de interés",
+       x = "Desempleo (%)", y = "Tasa de interés (%)",
+       color = NULL) +
+  theme_minimal()
+```
+
+> *Interpretación:* la pendiente de la recta es **negativa**: a mayor desempleo, menor tasa de interés. Es decir, la FED baja las tasas para estimular la economía cuando hay más desempleo. Los puntos naranjas (crisis) se concentran en la esquina de alto desempleo y baja tasa, el cual es coherente con el escenario 2008–2009.
+
+---
+
+# Parte 3 — Regresión simple
+
+**Ejercicio 6.** Regresión simple.
+
+```{r}
+modelo_simple <- lm(tasa_interes ~ inflacion, data = macro)
+modelo_simple
+```
+
+**Ejercicio 7.** Resumen e interpretación.
+
+```{r}
+summary(modelo_simple)
+```
+
+> *Interpretación:* el coeficiente de "inflacion" es positivo y significativo (p-value muy bajo): cuando sube la inflación, la FED tiende a subir las tasas — coherente con la regla de Taylor. El R^2 ajustado indica qué porcentaje de la variación de la tasa de interés explica la inflación por sí sola. El signo positivo confirma la intuición económica de que la FED responde a la inflación subiendo tasas.
+
+---
+
+# Parte 4 — Regresión múltiple
+
+**Ejercicio 8.** Tres modelos anidados.
+
+```{r}
+m1 <- lm(tasa_interes ~ desempleo,                       data = macro)
+m2 <- lm(tasa_interes ~ desempleo + inflacion,           data = macro)
+m3 <- lm(tasa_interes ~ desempleo + inflacion + tasa_lag1, data = macro)
+```
+
+**Ejercicio 9.** Comparación con `glance()` + `bind_rows()`.
+
+```{r}
+list(m1, m2, m3) %>%
+  map(glance) %>%
+  bind_rows(.id = "modelo") %>%
+  select(modelo, r.squared, adj.r.squared, AIC, BIC)
+```
+
+> *Interpretación:* el modelo con más variables ("m3") tiene el R^2 ajustado más alto y el AIC más bajo. Esto indica que tanto la inflación como la tasa de interés rezagada aportan información explicativa más allá del desempleo solo.
+
+**Ejercicio 10.** Coeficientes del mejor modelo, filtrados a p-value < 0.05.
+
+```{r}
+m3 %>%
+  tidy() %>%
+  filter(p.value < 0.05)
+```
+
+---
+
+# Parte 5 — Diagnósticos
+
+**Ejercicio 11.** Residuales vs valores ajustados de "m3".
+
+```{r}
+augment(m3) %>%
+  ggplot(aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.4, color = "steelblue") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "firebrick") +
+  geom_smooth(se = FALSE, color = "orange", linewidth = 0.7) +
+  labs(title = "Residuales vs valores ajustados — m3",
+       x = "Valores ajustados", y = "Residuales") +
+  theme_minimal()
+```
+
+> *Interpretación:* si la línea naranja de tendencia se aleja del cero o muestra curvatura (U, parábola), hay estructura no capturada por el modelo. Idealmente debe oscilar pegada al cero.
+
+**Ejercicio 12.** Residuales en el tiempo. Se eliminan primero los `NA` introducidos por `lag()`.
+
+```{r}
+macro_sin_na <- macro %>% drop_na(tasa_lag1)
+
+m3 <- lm(tasa_interes ~ desempleo + inflacion + tasa_lag1,
+         data = macro_sin_na)
+
+augment(m3, data = macro_sin_na) %>%
+  ggplot(aes(x = fecha, y = .resid)) +
+  geom_line(color = "steelblue", linewidth = 0.7) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "firebrick") +
+  labs(title = "Residuales en el tiempo — m3",
+       x = NULL, y = "Residual") +
+  theme_minimal()
+```
+
+> *Interpretación:* si los residuales muestran racimos del mismo signo durante varios meses consecutivos, es decir, oleadas positivas seguidas de oleadas negativas. Por lo tanto, hay autocorrelación serial, lo que invalida los errores estándar y los p-values de "m3".
+
+---
+
+# Parte 6 — Período de crisis
+
+**Ejercicio 13.** Modelo solo durante 2008–2012.
+
+```{r}
+m3_crisis <- lm(tasa_interes ~ desempleo + inflacion + tasa_lag1,
+                data = crisis_financiera)
+
+comparacion <- bind_rows(
+  tidy(m3)         %>% mutate(modelo = "Completo (2000–2024)"),
+  tidy(m3_crisis)  %>% mutate(modelo = "Crisis (2008–2012)")
+) %>%
+  select(modelo, term, estimate, std.error, p.value)
+
+comparacion
+```
+
+> *Interpretación:* los coeficientes pueden cambiar de magnitud o de signo durante la crisis. Por ejemplo, la sensibilidad de la tasa de interés a la inflación suele ser más alta en periodos de crisis, y la del desempleo también cambia porque la FED reacciona de forma más agresiva en recesiones. Comparar los dos modelos te dice si la política monetaria fue distinta durante 2008–2012 respecto al resto del periodo.

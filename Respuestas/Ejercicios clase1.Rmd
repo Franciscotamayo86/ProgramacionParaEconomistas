@@ -1,0 +1,315 @@
+---
+title: "Clase 1: Ejercicios — Solución"
+date: "30 de junio de 2026"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = "##")
+```
+
+---
+
+# Parte 1 — R básico
+
+**Ejercicio 1.** Calcula lo siguiente:
+
+```{r}
+# a) Raíz cuadrada de 225 más 3 elevado a la 4
+#    sqrt(225) = 15,  3^4 = 81,  15 + 81 = 96
+sqrt(225) + 3^4
+
+# b) Residuo de dividir 1000 entre 7 (operador %%)
+#    1000 = 142*7 + 6  -> residuo = 6
+1000 %% 7
+
+# c) e elevado a la 2
+#    exp(2) ≈ 7.389056
+exp(2)
+```
+
+**Ejercicio 2.** México tuvo en 2023 un PIB nominal de 29,700 miles de millones de pesos y un deflactor del PIB de 148.3 (base 2013 = 100). Guarda cada valor en un objeto con nombre descriptivo y calcula el PIB real. Datos: PIB nominal 29,700 miles de millones, deflactor 148.3 (base 2013 = 100). PIB real = PIB nominal / (deflactor/100).
+
+```{r}
+pib_nominal   <- 29700  # miles de millones de pesos
+deflactor_pib <- 148.3          # base 2013 = 100
+pib_real      <- pib_nominal / (deflactor_pib / 100)
+pib_real
+# Interpretación: el PIB real (a precios de 2013) es aprox. 20,027
+# miles de millones de pesos. La diferencia con el nominal es la inflación
+# acumulada desde 2013.
+```
+
+**Ejercicio 3.** Sin correr el código, escribe en un comentario si cada expresión devuelve `TRUE` o `FALSE`. Luego verifica: Predicciones:
+
+```{r}
+# 10 == 10         -> TRUE   (igualdad numérica)
+# 10 != 10         -> FALSE  (sí son iguales, así que "no distintos" es FALSE)
+# (5 > 3) & (8 < 5)-> FALSE  (TRUE & FALSE -> FALSE)
+# (5 > 3) | (8 < 5)-> TRUE   (TRUE | FALSE -> TRUE; basta con que una sea TRUE)
+# !(3 > 1)         -> FALSE  (3>1 es TRUE, su negación es FALSE)
+
+10 == 10
+10 != 10
+(5 > 3) & (8 < 5)
+(5 > 3) | (8 < 5)
+!(3 > 1)
+```
+
+---
+
+# Parte 2 — Tipos de datos y vectores
+
+**Ejercicio 4.** Para cada objeto, escribe en un comentario qué tipo crees que es *antes* de verificarlo con `class()`. Al final explica por qué `d` no es numérico aunque parece serlo:
+
+```{r}
+a <- 19500.75
+b <- "tasa de desempleo"
+c <- FALSE
+d <- "2.8"
+
+# Predicción:
+# a -> numeric (número con decimales)
+# b -> character (está entre comillas)
+# c -> logical (TRUE/FALSE)
+# d -> character  ←  Parece número pero las comillas lo vuelven texto.
+
+class(a)
+class(b)
+class(c)
+class(d)
+
+# 
+# "d" no es numérico porque cualquier valor entre comillas dobles "" o simples '' se interpreta
+# como cadena de texto (character).
+```
+
+**Ejercicio 5.** Tenemos datos de desempleo para 20 países de América Latina y el Caribe. Usa los datos generados para contestar las preguntas. 
+
+
+```{r}
+set.seed(42)
+paises <- c("México", "Brasil", "Argentina", "Colombia", "Chile", "Perú",
+            "Venezuela", "Ecuador", "Bolivia", "Paraguay", "Uruguay",
+            "Costa Rica", "Panamá", "Guatemala", "Honduras", "El Salvador",
+            "Nicaragua", "Cuba", "República Dominicana", "Jamaica")
+
+desempleo <- round(runif(n = 20, min = 2.0, max = 15.0), 1)
+
+# a) Tasa promedio
+mean(desempleo)
+
+# b) ¿Cuántos países están por encima del promedio?
+
+sum(desempleo > mean(desempleo))
+
+# c) Países con desempleo menor a 7%
+paises[desempleo < 7]
+
+# d) Vector lógico: TRUE para desempleo > 10%
+alto_desempleo <- desempleo > 10
+alto_desempleo
+```
+
+---
+
+# Parte 3 — Data frames
+
+**Ejercicio 6.** Panel de 30 países.
+
+```{r}
+set.seed(7)
+n <- 30
+
+paises_macro <- c("México", "Brasil", "Argentina", "Colombia", "Chile", "Perú",
+                  "Venezuela", "Ecuador", "Bolivia", "Paraguay", "Uruguay",
+                  "Costa Rica", "Panamá", "Guatemala", "Honduras", "El Salvador",
+                  "Nicaragua", "Cuba", "Rep. Dominicana", "Jamaica",
+                  "Trinidad y Tobago", "Bahamas", "Haití", "Belice", "Guyana",
+                  "Surinam", "Barbados", "Santa Lucía", "Granada", "Dominica")
+
+macro <- data.frame(
+  pais      = paises_macro,
+  pib       = round(runif(n, min = 50,   max = 2500), 1),  # miles de mill. USD
+  inflacion = round(runif(n, min = 1.5,  max = 50.0), 1),  # %
+  desempleo = round(runif(n, min = 2.0,  max = 18.0), 1)   # %
+)
+
+# a) Resumen estadístico
+summary(macro)
+
+# b) Columna lógica: inflación > 10%
+macro$inflacion_alta <- macro$inflacion > 10
+head(macro, 5)
+
+# c) Filtrar desempleo < 8%
+desempleo_bajo <- macro[macro$desempleo < 8, ]
+desempleo_bajo
+
+# d) Países con inflación alta Y desempleo bajo, simultáneamente
+sum(macro$inflacion > 10 & macro$desempleo < 8)
+
+```
+
+---
+
+# Parte 4 — Matrices (OLS)
+
+El estimador de Mínimos Cuadrados Ordinarios tiene la siguiente forma matricial:
+
+$$\hat{\beta} = (X'X)^{-1}X'y$$
+
+Donde $X$ es la matriz de regresores (con una columna de unos para la constante) e $y$ es el vector de la variable dependiente.
+
+Ya tenemos los datos, el gráfico, y la matriz $X$ construida. Tu trabajo es calcular $\hat{\beta}$ paso a paso:
+
+```{r}
+set.seed(123)
+
+n          <- 50
+educacion  <- round(runif(n, min = 6, max = 20), 0)   # años de educación
+error      <- rnorm(n, mean = 0, sd = 2)               # ruido aleatorio
+salario    <- 2 + 1.8 * educacion + error              # miles de pesos al mes
+
+# Gráfico ya hecho — obsérvalo antes de estimar
+plot(educacion, salario,
+     main = "Educación y salario mensual",
+     xlab = "Años de educación",
+     ylab = "Salario (miles de pesos)",
+     pch  = 19, col = "steelblue")
+
+X <- matrix(c(rep(1, n), educacion), nrow = n, ncol = 2)
+colnames(X) <- c("constante", "educacion")
+y <- matrix(salario, nrow = n)
+```
+
+**a)** $X'X$ y su inversa $(X'X)^{-1}$
+
+```{r}
+# X'X: transpuesta de X por X.  Resultado 2x2.
+XtX <- t(X) %*% X
+XtX
+
+# Inversa: solve() resuelve sistemas lineales y, con un solo argumento,
+# devuelve la inversa de la matriz.
+XtX_inv <- solve(XtX)
+XtX_inv
+```
+
+**b)** $X'y$.
+
+```{r}
+Xty <- t(X) %*% y
+Xty
+```
+
+**c)** $\hat{\beta} = (X'X)^{-1}X'y$.
+
+```{r}
+betas <- XtX_inv %*% Xty
+betas
+```
+
+**d)** Verificación con `lm()` — debe dar lo mismo:
+
+```{r}
+coeficientes_lm <- coef(lm(salario ~ educacion))
+coeficientes_lm
+
+# Comprobación 
+all.equal(unname(betas), unname(coeficientes_lm))
+```
+
+**Interpretación económica:**
+
+- `constante` ≈ 2 (intercepto): salario esperado con 0 años de educación.
+- `educacion` ≈ 1.8: cada año adicional de educación se asocia, en promedio,
+  con 1.8 mil pesos más de salario mensual. (Coincide con el DGP
+  `salario = 2 + 1.8 * educacion + error`, así que la estimación recupera
+  los verdaderos parámetros, salvo el ruido.)
+
+---
+
+# Parte 5 — Refactorización del código "2am"
+
+El siguiente script fue escrito a las 2am antes de una presentación. Funciona. Pero nadie sabe qué hace.
+
+Tu tarea es dos cosas:
+
+1. Reescríbelo con nombres descriptivos y formato legible
+2. Explica en un comentario qué hace cada línea
+
+
+```{r}
+set.seed(2026)
+n <- 32
+g <- c("Grupo A","Grupo B","Grupo C","Grupo D",
+       "Grupo E","Grupo F",
+       "Grupo G","Grupo H")
+d <- data.frame(
+  eq  = paste0("Selección_", 1:n),
+  gf  = round(runif(n, 0, 15)),
+  gc  = round(runif(n, 0, 15)),
+  pos = round(runif(n, 1, 32)),
+  grp = rep(g, each = 4)
+)
+d$dg  <- d$gf - d$gc
+d$ef  <- ifelse(d$dg > 0, 1, 0)
+d2    <- d[order(-d$gf), ]
+d3    <- d2[1:8, ]
+m     <- mean(d3$gf)
+s     <- sd(d3$gf)
+d3$z  <- (d3$gf - m) / s
+cat("Promedio:", round(m, 2), "\n")
+cat("Top equipo:", d3$eq[1], "con", d3$gf[1], "goles\n")
+
+
+
+## 2) Código reescrito con nombres descriptivos y comentarios
+
+```{r}
+set.seed(2026)
+
+# --- 1. Configuración -------------------------------------------------------
+n_equipos       <- 32
+n_por_grupo     <- 4
+n_grupos        <- n_equipos / n_por_grupo   # 8 grupos
+
+nombres_grupos <- c("Grupo A", "Grupo B", "Grupo C", "Grupo D",
+                    "Grupo E", "Grupo F", "Grupo G", "Grupo H")
+
+# --- 2. Simulación de la base de datos -------------------------------------
+equipos <- data.frame(
+  nombre  = paste0("Selección_", 1:n_equipos),
+  gf      = round(runif(n_equipos, 0, 15)),    # goles a favor
+  gc      = round(runif(n_equipos, 0, 15)),    # goles en contra
+  posicion = round(runif(n_equipos, 1, 32)),   # posición final en el torneo
+  grupo   = rep(nombres_grupos, each = n_por_grupo)
+)
+
+# --- 3. Variables derivadas -------------------------------------------------
+# Diferencia de goles: positiva = anota más de lo que recibe.
+equipos$diferencia_goles  <- equipos$gf - equipos$gc
+
+# ¿Ganó? 1 si la diferencia de goles es positiva, 0 en otro caso.
+equipos$gano <- ifelse(equipos$diferencia_goles > 0, 1, 0)
+
+# --- 4. Ranking: top 8 por goles a favor ------------------------------------
+equipos_ordenados <- equipos[order(-equipos$gf), ]
+top8              <- equipos_ordenados[1:8, ]
+
+# --- 5. Estandarización (z-score) de los goles a favor del top 8 ------------
+media_gf  <- mean(top8$gf)
+desvio_gf <- sd(top8$gf)
+top8$gf_z <- (top8$gf - media_gf) / desvio_gf
+
+# --- 6. Reporte en consola --------------------------------------------------
+cat("Promedio:", round(media_gf, 2), "\n")
+cat("Top equipo:", top8$nombre[1], "con", top8$gf[1], "goles\n")
+```
+

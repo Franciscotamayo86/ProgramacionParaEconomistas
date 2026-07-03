@@ -1,0 +1,183 @@
+---
+title: "Clase 2: Ejercicios — Solución"
+author: "Francisco Tamayo"
+date: "30 de junio de 2026"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = "##")
+```
+
+```{r}
+library(tidyverse)
+```
+
+---
+
+# Datos: una tienda de ropa en línea
+
+```{r}
+set.seed(55)
+
+n <- 50
+
+pedidos <- data.frame(
+  ciudad    = sample(c("CDMX", "Guadalajara", "Monterrey"), n, replace = TRUE),
+  categoria = sample(c("Playeras", "Pantalones", "Zapatos", "Accesorios"), n, replace = TRUE),
+  metodo_pago = sample(c("Tarjeta", "Transferencia", "Efectivo"), n, replace = TRUE),
+  precio    = round(runif(n, min = 150, max = 1800), 0),
+  unidades  = sample(1:4, n, replace = TRUE)
+)
+
+head(pedidos, 10)
+```
+
+---
+
+# Parte 1 — `filter()`
+
+**Ejercicio 1.** Pedidos de Guadalajara.
+
+```{r}
+pedidos %>% filter(ciudad == "Guadalajara")
+```
+
+**Ejercicio 2.** Pagos con Tarjeta o Transferencia.
+
+```{r}
+pedidos %>% filter(metodo_pago %in% c("Tarjeta", "Transferencia"))
+```
+
+**Ejercicio 3.** Precio > 1000 y unidades > 2.
+
+```{r}
+pedidos %>% filter(precio > 1000, unidades > 2)
+```
+
+---
+
+# Parte 2 — `select()`
+
+**Ejercicio 4.** Columnas `ciudad`, `categoria`, `precio`.
+
+```{r}
+pedidos %>% select(ciudad, categoria, precio)
+```
+
+**Ejercicio 5.** Todas excepto `metodo_pago`.
+
+```{r}
+pedidos %>% select(-metodo_pago)
+```
+
+---
+
+# Parte 3 — Encadenar `filter` y `select`
+
+**Ejercicio 6.** Pedido más caro en Monterrey.
+
+```{r}
+pedidos %>%
+  filter(ciudad == "Monterrey") %>%
+  arrange(desc(precio)) %>%
+  slice(1) %>%
+  select(categoria, precio)
+```
+
+**Ejercicio 7.** Pedido más barato pagado en Efectivo.
+
+```{r}
+pedidos %>%
+  filter(metodo_pago == "Efectivo") %>%
+  arrange(precio) %>%
+  slice(1) %>%
+  select(ciudad, categoria, precio)
+```
+
+---
+
+# Parte 4 — `mutate()`
+
+**Ejercicio 8.** Columna `ingreso`.
+
+```{r}
+pedidos <- pedidos %>% mutate(ingreso = precio * unidades)
+```
+
+**Ejercicio 9.** Columna `pedido_grande`.
+
+```{r}
+pedidos %>% mutate(pedido_grande = ingreso > 2000)
+```
+
+---
+
+# Parte 5 — `group_by()` + `summarise()`
+
+**Ejercicio 10.** Resumen por ciudad.
+
+```{r}
+pedidos %>%
+  group_by(ciudad) %>%
+  summarise(
+    ingreso_total      = sum(ingreso),
+    ingreso_promedio   = mean(ingreso),
+    n_pedidos          = n(),
+    .groups = "drop"
+  )
+```
+
+**Ejercicio 11.** Unidades vendidas por categoría.
+
+```{r}
+pedidos %>%
+  group_by(categoria) %>%
+  summarise(unidades_total = sum(unidades), .groups = "drop")
+```
+
+**Ejercicio 12.** Ingreso total por ciudad y método de pago.
+
+```{r}
+ingreso_ciudad_pago <- pedidos %>%
+  group_by(ciudad, metodo_pago) %>%
+  summarise(ingreso_total = sum(ingreso), .groups = "drop")
+ingreso_ciudad_pago
+```
+
+---
+
+# Parte 6 — Pivotar
+
+**Ejercicio 13.** Pivotar a formato ancho.
+
+```{r}
+ingreso_ciudad_pago %>%
+  pivot_wider(
+    names_from  = metodo_pago,
+    values_from = ingreso_total,
+    values_fill = 0
+  )
+```
+
+---
+
+# Parte 7 — Todo junto
+
+**Ejercicio 14.** Categoría con mayor ingreso en cada ciudad.
+
+```{r}
+pedidos %>%
+  group_by(ciudad, categoria) %>%
+  summarise(ingreso = sum(ingreso), .groups = "drop") %>%
+  group_by(ciudad) %>%
+  filter(ingreso == max(ingreso)) %>%
+  select(ciudad, categoria, ingreso)
+```
+
+
