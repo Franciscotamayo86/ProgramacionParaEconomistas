@@ -1,42 +1,42 @@
+---
 title: "Productos metálicos en CDMX — Análisis DENUE"
-author: "Tu nombre aquí"
-date: "`r Sys.Date()`"
+author: "Francisco Tamayo"
+date: "6 de julio de 2026"
 output:
   html_document:
-  toc: true
-toc_float: true
-theme: flatly
-highlight: tango
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
 ---
 
-unzip("INEGI_DENUE_1.zip")
-
-denue_ind <- read_csv("INEGI_DENUE_02072026.csv")
-
-library(readr)
-guess_encoding("INEGI_DENUE_02072026.csv")
-
----
-  
-  ```{r setup, include=FALSE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = "##")
+knitr::opts_knit$set(root.dir = "/Users/franciscotamayo/Desktop/ProgramacionParaEconomistas")
 ```
 
 ```{r}
 library(tidyverse)
+library(readr)
 ```
 
 ---
-  
-  ## Carga de datos
-  
-  ```{r}
+
+## Carga de datos
+
+```{r}
 getwd()
-
-
 file.exists("INEGI_DENUE_02072026.csv")
-
 list.files()
+```
+
+```{r}
+unzip("INEGI_DENUE_1.zip")
+
+guess_encoding("INEGI_DENUE_02072026.csv")
+```
+
+```{r}
 denue <- read_csv("INEGI_DENUE_02072026.csv",
                   locale = locale(encoding = "LATIN1"),
                   show_col_types = FALSE)
@@ -47,13 +47,18 @@ nrow(denue)
 > Fuente: DENUE (INEGI), directorio de unidades económicas, sector 332 — Fabricación de productos metálicos.
 
 ---
-  
+
+## Exploración: tablas antes que gráficas
+
+**¿Podría ser una tabla o una oración?** A veces sí. Empezamos con tablas para ver qué información amerita visualizarse.
+
+### Total de establecimientos
+
 ```{r}
-# Total de establecimientos
 nrow(denue)
 ```
 
-> *"Hay 3,287 establecimientos de productos metálicos en CDMX."* → Esto no necesita gráfica. Una oración es suficiente.
+> *"Hay 3,287 establecimientos de productos metálicos en CDMX."* → **Esto no necesita gráfica.** Una oración basta.
 
 ### Distribución por alcaldía
 
@@ -66,11 +71,11 @@ tabla_alcaldias <- denue %>%
 tabla_alcaldias
 ```
 
-> Con 16 alcaldías, una tabla ya es informativa, pero una gráfica de barras hace el patrón geográfico evidente.
-  
-  ## Distribución por tamaño (estrato de personal)
-  
-  ```{r}
+> **¿Tabla o gráfica?** Con 16 alcaldías, una tabla ya es informativa — pero una gráfica de barras hace el patrón geográfico evidente de un vistazo. **Va gráfica.**
+
+### Distribución por tamaño (estrato de personal)
+
+```{r}
 tabla_tamano <- denue %>%
   count(`Descripcion estrato personal ocupado`, sort = TRUE) %>%
   mutate(pct = round(100 * n / sum(n), 1)) %>%
@@ -80,7 +85,7 @@ tabla_tamano <- denue %>%
 tabla_tamano
 ```
 
-> *"El 76% de los establecimientos son micro (0 a 5 personas)."* → Esto podría ser una oración, pero debido al contraste entre estratos, una gráfica refuerza el mensaje.
+> *"El 76% de los establecimientos son micro (0 a 5 personas)."* → **Esto podría ser una oración.** Pero como el contraste entre estratos es importante, una gráfica refuerza el mensaje.
 
 ### Distribución por actividad específica
 
@@ -95,14 +100,14 @@ tabla_actividad
 ```
 
 ---
-  
-  ## Visualizaciones
-  
+
+## Visualizaciones
 
 ### Gráfica 1 — Establecimientos por alcaldía
 
-  
-  ```{r fig.width=8, fig.height=6}
+**Mensaje:** *"Las manufacturas metálicas se concentran en Iztapalapa y Gustavo A. Madero."*
+
+```{r fig.width=8, fig.height=6}
 denue %>%
   count(Municipio, sort = TRUE) %>%
   mutate(Municipio = reorder(Municipio, n)) %>%
@@ -118,23 +123,23 @@ denue %>%
     caption  = "Fuente: INEGI, DENUE"
   ) +
   theme_minimal()
-
-Mensaje: "Las manufacturas metálicas se concentran en Iztapalapa y Gustavo A. Madero."
 ```
 
-  Datos adicionales:
-- Barras horizontales → cada alcaldía.
-- Eje x → número de establecimientos (con dato al final de cada barra).
-- Eje y → alcaldía, ordenada de mayor a menor (Iztapalapa arriba).
-- El título y subtítulo responden el qué y el cuánto, cosas que le dan profundidad a la gráfica.
+**Lectura por elementos:**
+
+- **Barras horizontales** → cada alcaldía.
+- **Eje x** → número de establecimientos (con dato al final de cada barra).
+- **Eje y** → alcaldía, ordenada de mayor a menor (Iztapalapa arriba).
+- **Sin leyenda** → no hay variables categóricas adicionales; el color es solo decorativo.
+- **Título + subtítulo** → responden "¿qué?" y "¿cuántos?" sin que el lector tenga que adivinar.
 
 ---
-  
-  ### Gráfica 2 — Distribución por tamaño (micro vs. PyME vs. grande)
-  
-  Mensaje: "El sector es predominantemente micro."
-  
-  ```{r fig.width=7, fig.height=4}
+
+### Gráfica 2 — Distribución por tamaño (micro vs. PyME vs. grande)
+
+**Mensaje:** *"El sector es predominantemente micro."*
+
+```{r fig.width=7, fig.height=4}
 denue %>%
   count(`Descripcion estrato personal ocupado`) %>%
   mutate(
@@ -157,18 +162,17 @@ denue %>%
   theme(axis.text.x = element_text(angle = 20, hjust = 1))
 ```
 
-Datos relevantes
-  
-  - Eje x → cada estrato (etiqueta clara: "0 a 5 personas", etc.).
-- Eje y → número de establecimientos.
+**Lectura por elementos:**
 
+- **Eje x** → cada estrato (etiqueta clara: "0 a 5 personas", etc.).
+- **Eje y** → número de establecimientos.
+- **Etiqueta encima de cada barra** → número exacto + porcentaje. **El lector puede señalar y decir qué significa cada elemento.**
 
-  
-  ---
-  
-  ## Gráfica 3 — Top 5 alcaldías
-  
- Se prioriza la concentración en el sector dejando de lado aquellas alcaldías que no son relevantes.
+---
+
+### Gráfica 3 — Top 5 alcaldías (enfoque)
+
+A veces menos es más. Cuando la historia es la concentración, enfoca el top y pon el resto como "Otras".
 
 ```{r fig.width=7, fig.height=4}
 top5 <- tabla_alcaldias %>%
@@ -196,7 +200,7 @@ grafica_top5 %>%
   scale_fill_manual(values = c("FALSE" = "steelblue", "TRUE" = "gray70")) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.18))) +
   labs(
-    title    = "Top 5 alcaldías que concentran más de la mitad del sector",
+    title    = "Top 5 alcaldías concentran más de la mitad del sector",
     subtitle = "Productos metálicos en CDMX",
     x        = NULL,
     y        = "Número de establecimientos"
@@ -205,44 +209,42 @@ grafica_top5 %>%
   theme(axis.text.x = element_text(angle = 15, hjust = 1))
 ```
 
-Datos relevantes:
-  
-  - Top 5 en azul, (Otras 11 alcaldías) en gris → diferenciación visual clara entre lo relevante y el resto.
-- Hay etiquetas con número y porcentaje, por lo tanto, el lector no necesita hacer cuentas mentalmente.
-- El título afirma el mensaje y no solo describe el contenido. (Concentración de la industria de productos metálicos)
+**Lectura por elementos:**
+
+- **Top 5 en azul**, **"Otras 11 alcaldías"** en gris → diferenciación visual clara entre lo relevante y el resto.
+- **Etiquetas con número + porcentaje** → el lector no necesita hacer cuentas mentalmente.
+- **Título afirma el mensaje**, no solo describe el contenido.
 
 ---
 
+## Verificación de las 3 preguntas (Storytelling with Data)
 
----
-  
-Resumen:
-  
-  ## Pregunta 1: ¿Cuál es el mensaje? ¿Cabe en una oración?
-  
-  > "En CDMX existen 3,287 establecimientos de productos metálicos, concentrados en Iztapalapa, Gustavo A. Madero y Azcapotzalco; predominantemente micro (0-5 personas)."
-  
-  R= Sí cabe.
+### Pregunta 1: ¿Cuál es el mensaje? ¿Cabe en una oración?
 
-## Pregunta 2: ¿Podría ser una tabla o una oración?
+> *"En CDMX existen 3,287 establecimientos de productos metálicos, concentrados en Iztapalapa, GAM y Azcapotzalco, y predominantemente micro (0-5 personas)."*
+
+Sí cabe.
+
+### Pregunta 2: ¿Podría ser una tabla o una oración?
 
 - *"Hay 3,287 establecimientos"* → oración, no necesita gráfica.
-- Distribución por alcaldía (16 valores) → la tabla ya funciona, pero la gráfica añade impacto visual.
-- Distribución por tamaño (4 categorías) → la tabla funciona, pero el gráfico refuerza.
+- Distribución por alcaldía (16 valores) → tabla ya funciona, **pero la gráfica añade impacto visual**.
+- Distribución por tamaño (4 categorías) → tabla funciona, **gráfica refuerza**.
 - Distribución por actividad (muchas categorías) → tabla es mejor que gráfica de barras con 30+ categorías.
 
-## Pregunta 3: ¿Puede el lector señalar cada elemento y decir qué significa?
+### Pregunta 3: ¿Puede el lector señalar cada elemento y decir qué significa?
 
-- Cada barra tiene etiqueta con número y porcentaje.
+- Cada barra tiene etiqueta con número + porcentaje.
 - Cada eje tiene título con unidades (o se omite cuando es obvio).
 - El gráfico inicia en 0.
 - El título de cada gráfica afirma el mensaje, no solo describe.
 
-
 ---
-  
-  ## Conclusión
-  
-  Mensaje final:
-  
-  > La fabricación de productos metálicos en CDMX es un sector micro y territorialmente concentrado: 3,287 establecimientos, 76% con 0–5 empleados, y casi la mitad ubicados en solo 4 alcaldías del oriente y norte (Iztapalapa, Gustavo A. Madero, Azcapotzalco y Venustiano Carranza).
+
+## Conclusión
+
+**Mensaje final:**
+
+> La fabricación de productos metálicos en CDMX es un sector **micro y territorialmente concentrado**: 3,287 establecimientos, 76% con 0–5 empleados, y casi la mitad ubicados en solo 4 alcaldías del oriente y norte (Iztapalapa, Gustavo A. Madero, Azcapotzalco y Venustiano Carranza).
+
+**Visualización recomendada para entregar:** Gráfica 3 (Top 5 alcaldías) + Gráfica 2 (Estrato). Son las que mejor cuentan la historia con menos ruido.
